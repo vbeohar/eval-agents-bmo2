@@ -75,3 +75,26 @@ These warnings can be safely ignored, as they are the result of a bug in the ups
 
 If you're curious about what "uv" stands for, it appears to have been more or
 less chosen [randomly](https://github.com/astral-sh/uv/issues/1349#issuecomment-1986451785).
+
+
+
+# RUN THE FOLLOWING COMMANDS ON YOUR VS CODE TERMINAL: 
+```
+cd /home/coder/eval-agents-bmo2
+pwd
+ls
+
+python3 -m venv .venv
+
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+
+pip install -e .
+
+pip install ipykernel jupyter
+
+python -m ipykernel install --user --name eval-agents-bmo2 --display-name "Python (eval-agents-bmo2)"
+
+jupyter kernelspec list
+```
