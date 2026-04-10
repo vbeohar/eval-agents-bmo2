@@ -134,6 +134,19 @@ Do not fabricate transaction details or make unsupported inferences. When uncert
 default to "NONE" and document why evidence is insufficient
 """
 
+NARRATIVE_APPENDIX = """\
+
+### Step 5: Draft Regulatory Narrative
+After you complete the investigation, create a regulatory narrative only from facts supported by the database queries.
+
+Rules:
+- Do not invent customer intent, external facts, or KYC details not present in the data.
+- The regulatory narrative must be consistent with `is_laundering`, `pattern_type`, and `flagged_transaction_ids`.
+- If evidence is insufficient, still populate the narrative object, but set `filing_recommendation=false` and clearly explain the limitations.
+- `factual_timeline` must be chronological.
+- `risk_indicators` must be specific and evidence-based.
+- Keep `narrative_text` concise, factual, and regulator-ready.
+"""
 
 def create_aml_investigation_agent(
     name: str = "AmlInvestigationAnalyst",
@@ -244,7 +257,7 @@ def create_aml_investigation_agent(
         before_agent_callback=before_agent_callback,
         after_agent_callback=after_agent_callback,
         model=client_manager.configs.default_planner_model,
-        instruction=instructions or ANALYST_PROMPT,
+        instruction=(instructions or ANALYST_PROMPT) + NARRATIVE_APPENDIX,
         tools=[FunctionTool(db.get_schema_info), FunctionTool(db.execute)],
         generate_content_config=GenerateContentConfig(
             http_options=HttpOptions(timeout=timeout_sec * 1000) if timeout_sec is not None else None,

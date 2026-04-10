@@ -91,15 +91,113 @@ class GroundTruth(BaseModel):
     )
 
 
-class AnalystOutput(BaseModel):
-    """Analyst notes for a laundering case."""
+# vb edits Add a structured regulatory narrative model and attach it to AnalystOutput.
+# class NarrativeType(str, Enum):
+#     STR = "STR"
+#     SAR = "SAR"
 
+
+# class RegulatoryNarrative(BaseModel):
+#     narrative_type: NarrativeType = Field(..., description="Type of regulatory filing narrative.")
+#     title: str = Field(..., description="Short narrative title.")
+#     executive_summary: str = Field(..., description="2-4 sentence executive summary.")
+#     risk_indicators: list[str] = Field(default_factory=list, description="Concrete suspicious indicators.")
+#     factual_timeline: list[str] = Field(default_factory=list, description="Ordered chronology of material events.")
+#     filing_recommendation: bool = Field(..., description="Whether facts support filing.")
+#     narrative_text: str = Field(..., description="Final SAR/STR-style narrative text.")
+#     limitations: list[str] = Field(default_factory=list, description="Known data gaps or caveats.")
+
+
+# class AnalystOutput(BaseModel):
+#     summary_narrative: str = Field(..., description="Analyst's reasoning/evidence summary.")
+#     is_laundering: bool = Field(..., description="Whether the case involves money laundering.")
+#     pattern_type: LaunderingPattern = Field(..., description="The type of laundering pattern in the case.")
+#     pattern_description: str = Field(..., description="A short description of the laundering pattern.")
+#     flagged_transaction_ids: str = Field(
+#         ..., description="A string of comma-separated transaction IDs that make up the laundering pattern."
+#     )
+#     evidence_points: list[str] = Field(
+#         default_factory=list,
+#         description="Short evidence bullets grounded in observed transactions."
+#     )
+
+#     narrative_type: str | None = Field(
+#         default=None,
+#         description="Type of regulatory narrative, such as SAR or STR."
+#     )
+#     narrative_title: str | None = Field(
+#         default=None,
+#         description="Short title for the regulatory narrative."
+#     )
+#     narrative_executive_summary: str | None = Field(
+#         default=None,
+#         description="Short executive summary for the regulatory narrative."
+#     )
+#     narrative_risk_indicators: list[str] = Field(
+#         default_factory=list,
+#         description="Evidence-based suspicious indicators."
+#     )
+#     narrative_factual_timeline: list[str] = Field(
+#         default_factory=list,
+#         description="Chronological factual timeline."
+#     )
+#     filing_recommendation: bool | None = Field(
+#         default=None,
+#         description="Whether the facts support filing."
+#     )
+#     narrative_text: str | None = Field(
+#         default=None,
+#         description="Final SAR/STR-style narrative text."
+#     )
+#     narrative_limitations: list[str] = Field(
+#         default_factory=list,
+#         description="Known caveats or missing facts."
+#     )
+
+class AnalystOutput(BaseModel):
     summary_narrative: str = Field(..., description="Analyst's reasoning/evidence summary.")
     is_laundering: bool = Field(..., description="Whether the case involves money laundering.")
     pattern_type: LaunderingPattern = Field(..., description="The type of laundering pattern in the case.")
     pattern_description: str = Field(..., description="A short description of the laundering pattern.")
     flagged_transaction_ids: str = Field(
         ..., description="A string of comma-separated transaction IDs that make up the laundering pattern."
+    )
+    evidence_points: list[str] = Field(
+        default_factory=list,
+        description="Short evidence bullets grounded in observed transactions."
+    )
+
+    narrative_type: str | None = Field(
+        default=None,
+        description="Type of regulatory narrative, such as SAR or STR."
+    )
+    narrative_title: str | None = Field(
+        default=None,
+        description="Short title for the regulatory narrative."
+    )
+    narrative_executive_summary: str | None = Field(
+        default=None,
+        description="Short executive summary for the regulatory narrative."
+    )
+    narrative_risk_indicators: list[str] = Field(
+        default_factory=list,
+        description="Evidence-based suspicious indicators."
+    )
+    narrative_factual_timeline: list[str] = Field(
+        default_factory=list,
+        description="Chronological factual timeline."
+    )
+    filing_recommendation: bool | None = Field(
+        default=None,
+        description="Whether the facts support filing."
+    )
+    narrative_text: str | None = Field(
+        default=None,
+        description="Final SAR/STR-style narrative text."
+    )
+    narrative_limitations: list[str] = Field(
+        default_factory=list,
+        description="Known caveats or missing facts."
     )
 
 
@@ -502,11 +600,21 @@ def _parse_pattern_header(header: str) -> tuple[str, str]:
     return pattern_type, description
 
 
+from datetime import datetime, timedelta
+from typing import Any
+
 def _date_window_start(date_value: Any) -> str:
-    """Return an ISO 8601 window start string for a given date value."""
-    if isinstance(date_value, datetime):
-        date_value = date_value.date()
-    if hasattr(date_value, "isoformat"):
-        return f"{date_value.isoformat()}T00:00:00"
-    parsed = _parse_timestamp(str(date_value))
-    return parsed.strftime("%Y-%m-%dT00:00:00")
+    """Return an ISO 8601 window start string.
+
+    Converts the given date-like value into a datetime and subtracts
+    a fixed lookback window (default 10 days).
+    """
+    if isinstance(date_value, str):
+        dt = datetime.fromisoformat(date_value)
+    elif isinstance(date_value, datetime):
+        dt = date_value
+    else:
+        raise ValueError(f"Unsupported date_value type: {type(date_value)}")
+
+    window_start = dt - timedelta(days=10)
+    return window_start.isoformat()
